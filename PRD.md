@@ -111,7 +111,8 @@ admin (`admin@kampus.id` / `admin123`), moderator (`mod@kampus.id` /
 - **User ter-ban**: `POST` thread / komentar / vote → **403**
   (`{ error: "akun_diban" }`). Ban dicek di setiap endpoint tulis lewat
   helper `requireActiveUser`. Login tetap bisa (agar pesan ban terlihat),
-  tapi semua aksi tulis diblokir.
+  tapi semua aksi tulis diblokir. Moderator tidak bisa mem-ban dirinya
+  sendiri atau sesama moderator/admin.
 - `GET /api/mod/actions` (moderator/admin): riwayat ModAction desc.
 
 ### F5 — UI (Bahasa Indonesia)
