@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("user") // admin | moderator | user
+  isBanned     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  threads    Thread[]
+  votes      Vote[]
+  comments   Comment[]
+  reports    Report[]
+  sessions   Session[]
+  modActions ModAction[]
+
+  @@map("users")
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
+}
+
+model Thread {
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  votes    Vote[]
+  comments Comment[]
+
+  @@map("threads")
+}
+
+model Vote {
+  userId   Int
+  threadId Int
+  value    Int // 1 | -1
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@id([userId, threadId])
+  @@map("votes")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  threadId  Int
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  parentId  Int?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  body      String
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("comments")
+}
+
+model Report {
+  id         Int      @id @default(autoincrement())
+  targetType String   // thread | comment
+  targetId   Int
+  reason     String
+  reporterId Int
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  status     String   @default("open") // open | resolved | rejected
+  createdAt  DateTime @default(now())
+
+  @@map("reports")
+}
+
+model ModAction {
+  id          Int      @id @default(autoincrement())
+  moderatorId Int
+  moderator   User     @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  action      String // delete_thread | delete_comment | ban_user | reject_report
+  targetType  String // thread | comment | user | report
+  targetId    Int
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@map("mod_actions")
+}
